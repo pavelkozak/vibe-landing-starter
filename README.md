@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vibe Landing Starter
 
-## Getting Started
+Минималистичный лендинг с формой лидов, трекингом конверсий и webhook inbox.
 
-First, run the development server:
+---
+
+## 1. Как запустить локально
+
+**Требования:** Node.js 18+, PostgreSQL, npm или pnpm
+
+```bash
+npm install
+```
+
+Скопируйте `env.example` в `.env` и заполните переменные:
+
+```
+DATABASE_URL="postgresql://user:pass@localhost:5432/vibe_db"
+WEBHOOK_SECRET="your-webhook-secret"
+TELEGRAM_BOT_TOKEN="your-bot-token"
+TELEGRAM_CHAT_ID="your-chat-id"
+```
+
+Запуск:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 2. Миграции и seed
 
-## Learn More
+**Миграции** (создание/обновление таблиц):
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run db:migrate
+# или
+npx prisma migrate dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Seed** (демо-данные в пустую БД):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:seed
+# или
+npx prisma db seed
+```
 
-## Deploy on Vercel
+Seed создаёт 2 демо-лида, если таблица Lead пуста.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Просмотр данных:**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run db:studio
+# или
+npx prisma studio
+```
+
+---
+
+## 3. Демо-скрипт (проверка за 2 минуты)
+
+1. Запустите сервер в первом терминале:
+   ```bash
+   npm run dev
+   ```
+
+2. Во втором терминале выполните:
+   ```bash
+   npm run demo
+   ```
+
+Скрипт проверяет:
+- создание лида через `POST /api/leads`
+- webhook inbox (первая доставка)
+- идемпотентность (повторная доставка с тем же `Idempotency-Key` не создаёт дубль)
+
+**Ручная проверка:**
+- Откройте http://localhost:3000, заполните форму, отправьте
+- `npx prisma studio` — просмотр лидов и событий в БД
+
+---
+
+## Функционал
+
+1. **Landing** — 5 секций: Hero, Proof, Benefits, FAQ, CTA
+2. **Форма лида** — имя, контакт (email или Telegram), согласие → Postgres
+3. **События конверсии** — landing_view, cta_click, lead_created (в БД)
+4. **Webhook inbox** — `POST /api/webhook/inbox` с `X-Webhook-Secret` и `Idempotency-Key`
+5. **Идемпотентность** — повторная доставка не создаёт дубли
+6. **TG-уведомления** — при lead_created отправляется сообщение в Telegram
